@@ -4,4 +4,4 @@
 pnpm run dev
 
 ## Domain:
-swafe-gr24-as2.vercel.app
+https://swafe-gr24-as2.vercel.app
