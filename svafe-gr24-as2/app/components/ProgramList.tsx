@@ -11,9 +11,9 @@ export default function ProgramList() {
   useEffect(()=>{
     (async ()=>{
       try {
-        // GET /api/WorkoutPrograms per Swagger
         const data = await apiFetch('/api/WorkoutPrograms');
-        setPrograms(Array.isArray(data) ? data : []);
+        const programsList = Array.isArray(data) ? data : [];
+        setPrograms(programsList);
       } catch (err: any) {
         setError(err.message || 'Failed');
       } finally { setLoading(false); }
