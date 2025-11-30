@@ -11,6 +11,35 @@ export default function ExerciseForm({ programId, onAdded }: { programId: string
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
+  // Pre-defined exercise templates (name, description, sets, mode, repetitions/time)
+  const TEMPLATES = [
+    {
+      id: 'squat',
+      name: 'Squat',
+      description: 'Stand with your feet spread shoulder-width apart. Lower your body as far as you can by pushing your hips back and bending your knees. Pause, and then slowly push yourself back to the starting position.',
+      sets: 3,
+      mode: 'reps',
+      value: '20'
+    },
+    {
+      id: 'pushups',
+      name: 'Push ups',
+      description: 'Place your hands on the floor with legs straight out behind you resting on your toes. Bend your arms and slowly lower your chest until it nearly touches the floor, then push back up to the starting position.',
+      sets: 3,
+      mode: 'reps',
+      value: '10'
+    },
+    {
+      id: 'plank',
+      name: 'Plank',
+      description: 'Place your elbows on the floor shoulder-width apart with legs stretched out behind you so only your elbows and toes are in contact with the ground. Use your abdominal muscles to keep your body aligned.',
+      sets: 1,
+      mode: 'time',
+      value: '30'
+    }
+  ];
+  const [template, setTemplate] = useState<string>('');
+
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setLoading(true); setMsg(null);
     try {
@@ -25,9 +54,27 @@ export default function ExerciseForm({ programId, onAdded }: { programId: string
     finally { setLoading(false); }
   }
 
+  function applyTemplate(id: string) {
+    setTemplate(id);
+    if (!id) return;
+    const t = TEMPLATES.find(t => t.id === id);
+    if (!t) return;
+    setName(t.name);
+    setDescription(t.description);
+    setSets(t.sets);
+    setMode(t.mode as 'reps'|'time');
+    setRepsOrTime(t.value);
+  }
+
   return (
     <form onSubmit={submit} style={{display:'grid',gap:8,maxWidth:640}}>
       <h4>Add exercise</h4>
+      <label>Choose template
+        <select value={template} onChange={e=>applyTemplate(e.target.value)}>
+          <option value="">— custom / pick template —</option>
+          {TEMPLATES.map(t=> <option key={t.id} value={t.id}>{t.name}</option>)}
+        </select>
+      </label>
       <label>Name<input value={name} onChange={e=>setName(e.target.value)} required /></label>
       <label>Description<textarea value={description} onChange={e=>setDescription(e.target.value)} /></label>
       <label>Sets<input type="number" value={sets} onChange={e=>setSets(Number(e.target.value))} min={1} /></label>
