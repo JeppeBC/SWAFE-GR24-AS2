@@ -1,9 +1,9 @@
 # README
 
 ## Group 24:
-au693206 Jeppe Bangshaab Christensen \n
-au704610 Niels Viggo Stark Madsen \n
-au650199 Osman Ayvaz\n
+au693206 Jeppe Bangshaab Christensen  
+au704610 Niels Viggo Stark Madsen  
+au650199 Osman Ayvaz  
 
 prefix: group
 
