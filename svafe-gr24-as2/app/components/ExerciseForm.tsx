@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/api';
 
 export default function ExerciseForm({ programId, onAdded }: { programId: string, onAdded?: ()=>void }) {
@@ -39,6 +39,9 @@ export default function ExerciseForm({ programId, onAdded }: { programId: string
     }
   ];
   const [template, setTemplate] = useState<string>('');
+  const [customTemplates, setCustomTemplates] = useState<any[]>([]);
+  const [savingTemplateName, setSavingTemplateName] = useState('');
+  const [notice, setNotice] = useState<string | null>(null);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setLoading(true); setMsg(null);
@@ -57,7 +60,7 @@ export default function ExerciseForm({ programId, onAdded }: { programId: string
   function applyTemplate(id: string) {
     setTemplate(id);
     if (!id) return;
-    const t = TEMPLATES.find(t => t.id === id);
+    const t = TEMPLATES.find(t => t.id === id) || customTemplates.find(t => t.id === id);
     if (!t) return;
     setName(t.name);
     setDescription(t.description);
@@ -66,15 +69,66 @@ export default function ExerciseForm({ programId, onAdded }: { programId: string
     setRepsOrTime(t.value);
   }
 
+  // load saved templates from localStorage
+  useEffect(()=>{
+    try {
+      const raw = localStorage.getItem('exerciseTemplates');
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) setCustomTemplates(parsed);
+    } catch (err) {
+      console.warn('Failed to load custom templates', err);
+    }
+  },[]);
+
+  function persistTemplates(list: any[]) {
+    setCustomTemplates(list);
+    try { localStorage.setItem('exerciseTemplates', JSON.stringify(list)); } catch {}
+  }
+
+  function saveCustomTemplate() {
+    const name = savingTemplateName.trim();
+    if (!name) { setNotice('Enter a name for the template'); return; }
+    const id = `custom-${Date.now()}`;
+    const tmpl = { id, name, description, sets, mode, value: String(repsOrTime) };
+    const next = [tmpl, ...customTemplates];
+    persistTemplates(next);
+    setSavingTemplateName('');
+    setTemplate(id);
+    setNotice('Template saved');
+    setTimeout(()=>setNotice(null),2000);
+  }
+
+  function deleteCustomTemplate(id: string) {
+    const next = customTemplates.filter(t=>t.id !== id);
+    persistTemplates(next);
+    if (template === id) setTemplate('');
+    setNotice('Template deleted');
+    setTimeout(()=>setNotice(null),2000);
+  }
+
   return (
     <form onSubmit={submit} style={{display:'grid',gap:8,maxWidth:640}}>
       <h4>Add exercise</h4>
       <label>Choose template
-        <select value={template} onChange={e=>applyTemplate(e.target.value)}>
-          <option value="">— custom / pick template —</option>
-          {TEMPLATES.map(t=> <option key={t.id} value={t.id}>{t.name}</option>)}
-        </select>
+        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          <select value={template} onChange={e=>applyTemplate(e.target.value)} style={{flex:1}}>
+            <option value="">— custom / pick template —</option>
+            <optgroup label="Built-in">
+              {TEMPLATES.map(t=> <option key={t.id} value={t.id}>{t.name}</option>)}
+            </optgroup>
+            {customTemplates.length ? <optgroup label="Saved templates">{customTemplates.map(t=> <option key={t.id} value={t.id}>{t.name}</option>)}</optgroup> : null}
+          </select>
+          {template.startsWith('custom-') ? (
+            <button type="button" onClick={()=>deleteCustomTemplate(template)} style={{padding:'6px 8px'}} aria-label="Delete template">Delete</button>
+          ) : null}
+        </div>
       </label>
+      {notice && <div style={{color:'var(--c-2)'}}>{notice}</div>}
+      <div style={{display:'flex',gap:8,alignItems:'center'}}>
+        <input placeholder="Template name (save current)" value={savingTemplateName} onChange={e=>setSavingTemplateName(e.target.value)} />
+        <button type="button" onClick={saveCustomTemplate}>Save template</button>
+      </div>
       <label>Name<input value={name} onChange={e=>setName(e.target.value)} required /></label>
       <label>Description<textarea value={description} onChange={e=>setDescription(e.target.value)} /></label>
       <label>Sets<input type="number" value={sets} onChange={e=>setSets(Number(e.target.value))} min={1} /></label>
